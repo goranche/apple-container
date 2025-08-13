@@ -8,20 +8,20 @@ error() {
 	exit 1
 }
 
-# TODO: find a better way of finding the container command.
-# Brew puts it in /usr/local/bin (as does the Makefile by default, I believe), which is not on the path for launchd
+# Since container is by default installed to /usr/local/bin, and that is not in the path for launchd, we need to add it
+PATH=$PATH:/usr/local/bin
 
 # Some sanity checks
 
-command -v /usr/local/bin/container >/dev/null 2>&1 || error "container is not installed at /usr/local/bin"
+command -v container >/dev/null 2>&1 || error "container is not installed"
 command -v jq >/dev/null 2>&1 || error "jq is not installed"
 
 # Make sure the container system is up and running
-/usr/local/bin/container system start
+container system start
 
 # Just in case, not sure it's needed
 sleep 3
 
-for id in $(/usr/local/bin/container list --all --format json | jq -r '[ .[] | select(.configuration.labels | has("restart")) | select(.configuration.labels.restart == "boot" ) | .configuration.id ] | to_entries[] | "\(.value)"'); do
-	/usr/local/bin/container start $id
+for id in $(container list --all --format json | jq -r '[ .[] | select(.configuration.labels | has("restart")) | select(.configuration.labels.restart == "boot" ) | .configuration.id ] | to_entries[] | "\(.value)"'); do
+	container start $id
 done
